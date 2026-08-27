@@ -4,8 +4,11 @@ import requests
 
 app = FastAPI(
     title="ClasseViva MCP Tool",
-    description="API per ClasseViva Spaggiari integrata con Composio",
-    version="1.0.0"
+    description="API per ClasseViva Spaggiari",
+    version="1.0.0",
+    docs_url="/docs",
+    openapi_url="/openapi.json",
+    root_path="/api/index"
 )
 
 class LoginRequest(BaseModel):
@@ -26,21 +29,25 @@ def _login_spaggiari(username: str, password: str):
     user_id = auth_data.get("ident", "").replace("S", "")
     return token, user_id
 
-@app.post("/api/voti", summary="Recupera i voti dello studente")
+@app.get("/")
+def home():
+    return {"status": "ok", "message": "Server ClasseViva attivo!"}
+
+@app.post("/voti")
 def get_voti(data: LoginRequest):
     token, user_id = _login_spaggiari(data.username, data.password)
     url = f"https://web.spaggiari.eu/rest/v1/students/{user_id}/grades"
     headers = {"Z-Dev-Apikey": "+apRest4198106=", "Z-Auth-Token": token}
     return requests.get(url, headers=headers).json()
 
-@app.post("/api/agenda", summary="Recupera l'agenda e le verifiche")
+@app.post("/agenda")
 def get_agenda(data: LoginRequest, inizio: str = "20260901", fine: str = "20270630"):
     token, user_id = _login_spaggiari(data.username, data.password)
     url = f"https://web.spaggiari.eu/rest/v1/students/{user_id}/agenda/all/{inizio}/{fine}"
     headers = {"Z-Dev-Apikey": "+apRest4198106=", "Z-Auth-Token": token}
     return requests.get(url, headers=headers).json()
 
-@app.post("/api/compiti", summary="Recupera i compiti assegnati")
+@app.post("/compiti")
 def get_compiti(data: LoginRequest):
     token, user_id = _login_spaggiari(data.username, data.password)
     url = f"https://web.spaggiari.eu/rest/v1/students/{user_id}/lessons"
